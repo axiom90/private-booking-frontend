@@ -12,14 +12,27 @@ async function handleResponse(response) {
   }
 
   if (!response.ok) {
-    const message =
-      (data && (data.detail || data.message)) ||
-      `Request failed with status ${response.status}`;
+    let message = `Request failed with status ${response.status}`;
+
+    if (data) {
+      if (Array.isArray(data.detail)) {
+        const msgs = data.detail
+          .map((d) => d.msg || JSON.stringify(d))
+          .join('; ');
+        if (msgs) message = msgs;
+      } else if (typeof data.detail === 'string') {
+        message = data.detail;
+      } else if (typeof data.message === 'string') {
+        message = data.message;
+      }
+    }
+
     throw new Error(message);
   }
 
   return data;
 }
+
 
 export async function signup(email, password) {
   const res = await fetch(`${API_BASE_URL}/auth/signup`, {
